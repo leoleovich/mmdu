@@ -1,0 +1,15 @@
+[[user]]
+username = "test"
+host = "%"
+password = "*51310A7328C24D76AB4AC8C2BB874F70AC744F44"
+objectAccess = "*.*"
+privileges = ["ALL PRIVILEGES"]
+grantOptions = false
+
+[[user]]
+username = "root"
+host = "localhost"
+password = "*A8A18A101616EEE450280655C32FA18719970CD8"
+objectAccess = "*.*"
+privileges = ["ALL PRIVILEGES"]
+grantOptions = true
