@@ -1,14 +1,14 @@
 package main
 
 import (
+	"crypto/sha1"
 	"database/sql"
 	"fmt"
+	"io"
 	"log"
 	"reflect"
 	"regexp"
 	"strings"
-	"crypto/sha1"
-	"io"
 )
 
 type User struct {
@@ -46,7 +46,6 @@ func getUserFromDatabase(username, host string, db *sql.DB) (User, error) {
 			user.Table = re.ReplaceAllString(grantLine, "$3")
 		}
 	}
-
 	return user, nil
 }
 
@@ -78,13 +77,24 @@ func getAllUsersFromDB(db *sql.DB) ([]User, error) {
 	return users, nil
 }
 
-func (u *User) calcUserHashPassword () {
+func (u *User) calcUserHashPassword() {
 	h := sha1.New()
 	io.WriteString(h, u.Password)
 	h2 := sha1.New()
 	h2.Write(h.Sum(nil))
 
-	u.HashedPassword = strings.ToUpper(strings.Replace(fmt.Sprintf("*% x", h2.Sum(nil)), " ","", -1))
+	u.HashedPassword = strings.ToUpper(strings.Replace(fmt.Sprintf("*% x", h2.Sum(nil)), " ", "", -1))
+}
+
+func (u *User) compare(usr *User) bool {
+	if u.Username == usr.Username && u.Network == usr.Network && u.HashedPassword == usr.HashedPassword &&
+		u.Database == usr.Database && u.Table == usr.Table && u.GrantOption == usr.GrantOption &&
+		reflect.DeepEqual(u.Privileges, u.Privileges) {
+		return true
+	} else {
+		return false
+	}
+
 }
 
 func validateUsers(users []User) []User {
@@ -105,7 +115,7 @@ func getUsersToRemove(usersFromConf, usersFromDB []User) []User {
 	for _, userDB := range usersFromDB {
 		var found bool
 		for _, userConf := range usersFromConf {
-			if reflect.DeepEqual(userConf, userDB) {
+			if userConf.compare(&userDB) {
 				found = true
 				break
 			}
@@ -123,7 +133,7 @@ func getUsersToAdd(usersFromConf, usersFromDB []User) []User {
 	for _, userConf := range usersFromConf {
 		var found bool
 		for _, userDB := range usersFromDB {
-			if reflect.DeepEqual(userConf, userDB) {
+			if userConf.compare(&userDB) {
 				found = true
 				break
 			}
