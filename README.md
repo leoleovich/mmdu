@@ -1,15 +1,19 @@
 # Description
 
-This is a service to manage mysql users and databases.  
+**mmdu** - Mysql Manager of Databases and Users.  
+This service will ensure, that only users and databases defined in config file will exist. Everything which is not in there will be dropped, everything which is missing - added.  
+Default behavior is to keep data untouched but report about differences.  
+Config file can be generated via puppet, chef, salt, ansible  or any other config management system.  
+
 Inspired by puppet mysql module, but without known architectural problems.
 
-
+# Options
+ - **-e** - execute/apply all changes
+ - **-c** - custom location of config file (default is */etc/mmdu/mmdu.toml*)
 
 # Configuration
 
-There is a config file which must be located under */etc/mmdu/mmdu.toml*  
-But you can redefine it with option *-c*  
-You need to update settings and add your own data into int:  
+You need to update settings and add your own data into configuration file */etc/mmdu/mmdu.toml*:  
 
 - **[access]** - this section contains data to connect to mysql server.  
   You can specify *username*, *password*, *initPass*, *host*, *port*. If you do not - it has default values (root without password to localhost 3306).  
