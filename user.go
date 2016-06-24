@@ -151,7 +151,18 @@ func (u *User) dropUser(tx *sql.Tx, execute bool) bool {
 }
 
 func (u *User) addUser(tx *sql.Tx, execute bool) bool {
-	query := "GRANT " + strings.Join(u.Privileges, ", ") + " ON " + u.Database + "." + u.Table + " TO '" +
+	database := u.Database
+	table := u.Table
+
+	if strings.Contains(u.Database, "%") {
+		database = "`" + u.Database + "`"
+	}
+
+	if strings.Contains(u.Table, "%") {
+		table = "`" + u.Table + "`"
+	}
+
+	query := "GRANT " + strings.Join(u.Privileges, ", ") + " ON " + database + "." + table + " TO '" +
 		u.Username + "'@'" + u.Network + "' IDENTIFIED BY PASSWORD '" + u.HashedPassword + "'"
 
 	if u.GrantOption {
