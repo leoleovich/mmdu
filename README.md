@@ -10,6 +10,7 @@ Inspired by puppet mysql module, but without known architectural problems.
 There is a config file which must be located under */etc/mmdu/mmdu.toml*  
 But you can redefine it with option *-c*  
 You need to update settings and add your own data into int:  
+
 - **[access]** - this section contains data to connect to mysql server.  
   You can specify *username*, *password*, *initPass*, *host*, *port*. If you do not - it has default values (root without password to localhost 3306).  
   - username - users which has permissions to grant (WITH GRANT OPTION) privileges, drop and create databases and users  
@@ -18,7 +19,8 @@ You need to update settings and add your own data into int:
   
 - **[[database]]** - Databases which need to be in mysql.
   - name - name of database to manage
-  I strongly recommend you to keep **information_schema**, **performance_schema**, **mysql** in file. Without them mysql server will not work.  
+  I strongly recommend you to keep **information_schema**, **performance_schema**, **mysql** in file. Without them mysql server will not work. 
+  
 - **[[user]]** - Users which need to be in mysql.
   You can specify *username*, *network*, *password*, *hashedPassword*, *database*, *table*, *privileges*, *grantOption*  
   - username - username
