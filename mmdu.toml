@@ -11,6 +11,8 @@ name = "information_schema"
 name = "mysql"
 [[database]]
 name = "performance_schema"
+[[database]]
+name = "oleg_test"
 
 [[user]]
 username = "oleg"

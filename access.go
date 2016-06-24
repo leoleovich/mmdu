@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"database/sql"
 	"os"
 )
@@ -17,14 +16,6 @@ type Access struct {
 
 type AccessConfig struct {
 	Access Access
-}
-
-func getAccessFromConfig() (Access, error) {
-	var accessConf AccessConfig
-	if _, err := toml.DecodeFile("/etc/mmdu/mmdu.toml", &accessConf); err != nil {
-		return accessConf.Access, err
-	}
-	return accessConf.Access, nil
 }
 
 func (a *Access) getConnectionString(initPass bool) string {

@@ -53,7 +53,7 @@ func main() {
 	tx, err := db.Begin()
 	if err != nil {
 		fmt.Println("Failed to start transaction", err.Error())
-		os.Exit(1)
+		os.Exit(2)
 	}
 
 	usersToRemove := getUsersToRemove(validatedUsers, usersFromDB)

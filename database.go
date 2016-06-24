@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"log"
 	"strings"
-	"regexp"
 )
 
 type Database struct {
@@ -70,11 +69,15 @@ func getDatabasesToRemove(databasesFromConf, databasesFromDB []Database) []Datab
 	for _, dbDB := range databasesFromDB {
 		var found bool
 		for _, dbConf := range databasesFromConf {
-			if dbConf.Name == dbDB.Name || strings.Contains(dbConf.Name, "%") {
+			if dbConf.Name == dbDB.Name {
 				found = true
 				break
+			} else if strings.Contains(dbConf.Name, "%") {
+				if strings.HasPrefix(dbDB.Name, strings.Replace(dbConf.Name, "%", "", -1)) {
+					found = true
+					break
+				}
 			}
-
 		}
 		if !found {
 			databasesToRemove = append(databasesToRemove, dbDB)
@@ -93,8 +96,7 @@ func getDatabasesToAdd(databasesFromConf, databasesFromDB []Database) []Database
 				found = true
 				break
 			} else if strings.Contains(dbConf.Name, "%") {
-				re := regexp.MustCompile(strings.Replace(dbConf.Name, "%", ".*", -1))
-				if re.MatchString(dbDB.Name) {
+				if strings.HasPrefix(dbDB.Name, strings.Replace(dbConf.Name, "%", "", -1)) {
 					found = true
 					break
 				}
