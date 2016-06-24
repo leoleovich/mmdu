@@ -17,7 +17,7 @@ name = "oleg_test"
 [[user]]
 username = "oleg"
 network = "10.%"
-password = "oleg"
+hashedPassword = "*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B"
 database = "oleg%"
 table = "*"
 privileges = ["USAGE"]

@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	AccessConfig   AccessConfig
+	Access   Access
 	Database []Database
 	User     []User
 }
@@ -33,7 +33,7 @@ func main() {
 
 	validatedUsers := validateUsers(conf.User)
 
-	db := conf.AccessConfig.Access.connectAndCheck()
+	db := conf.Access.connectAndCheck()
 
 	usersFromDB, err := getAllUsersFromDB(db)
 	if err != nil {

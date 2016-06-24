@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
 	"os"
 )
 
@@ -10,12 +10,8 @@ type Access struct {
 	Username     string
 	Password     string
 	InitPassword string
-	Host     string
-	Port     int
-}
-
-type AccessConfig struct {
-	Access Access
+	Host         string
+	Port         int
 }
 
 func (a *Access) getConnectionString(initPass bool) string {
@@ -36,7 +32,8 @@ func (a *Access) getConnectionString(initPass bool) string {
 			return fmt.Sprintf("%s:%s@tcp(%s:%d)/", a.Username, a.InitPassword, a.Host, a.Port)
 		}
 	} else {
-		if a.InitPassword == "" {
+		if a.Password == "" {
+			fmt.Println("ddd")
 			return fmt.Sprintf("%s@tcp(%s:%d)/", a.Username, a.Host, a.Port)
 		} else {
 			return fmt.Sprintf("%s:%s@tcp(%s:%d)/", a.Username, a.Password, a.Host, a.Port)
@@ -45,7 +42,7 @@ func (a *Access) getConnectionString(initPass bool) string {
 
 }
 
-func (a *Access)connectAndCheck() *sql.DB {
+func (a *Access) connectAndCheck() *sql.DB {
 	db, err := sql.Open("mysql", a.getConnectionString(true))
 	if err != nil {
 		fmt.Println("Unable to connect to mysql", err.Error())
