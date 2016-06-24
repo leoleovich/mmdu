@@ -3,41 +3,39 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"log"
 	"reflect"
 	"regexp"
 	"strings"
+	"crypto/sha1"
+	"io"
 )
 
 type User struct {
-	Username    string
-	Host        string
-	Password    string
-	Database    string
-	Table       string
-	Privileges  []string
-	GrantOption bool
-}
-
-type UsersConfig struct {
-	User []User
+	Username       string
+	Network        string
+	Password       string
+	HashedPassword string
+	Database       string
+	Table          string
+	Privileges     []string
+	GrantOption    bool
 }
 
 func getUserFromDatabase(username, host string, db *sql.DB) (User, error) {
 
 	var grantPriv, grantLine string
 	var user User
-
-	err := db.QueryRow(selectUsersCurrentData, username, host).Scan(&user.Username, &user.Host, &user.Password, &grantPriv)
+	query := "SELECT User, Host, Password, Grant_priv FROM mysql.user WHERE User='" + username + "' and Host='" + host + "'"
+	err := db.QueryRow(query).Scan(&user.Username, &user.Network, &user.HashedPassword, &grantPriv)
 	if err != nil {
-		fmt.Println("Error querying "+selectUsersCurrentData+": ", err.Error())
+		fmt.Println("Error querying "+query+": ", err.Error())
 		return user, err
 	} else {
 		if grantPriv == "Y" {
 			user.GrantOption = true
 		}
-		err = db.QueryRow(fmt.Sprint("SHOW GRANTS FOR " + username + "@" + "'" + host + "'")).Scan(&grantLine)
+		err = db.QueryRow(fmt.Sprint("SHOW GRANTS FOR '" + username + "'@'" + host + "'")).Scan(&grantLine)
 		if err != nil {
 			fmt.Println(err.Error())
 			return user, err
@@ -80,13 +78,26 @@ func getAllUsersFromDB(db *sql.DB) ([]User, error) {
 	return users, nil
 }
 
-func getAllUsersFromConfig() ([]User, error) {
-	var users UsersConfig
-	if _, err := toml.DecodeFile("/etc/mmdu/mmdu.toml", &users); err != nil {
-		return users.User, err
-	}
+func (u *User) calcUserHashPassword () {
+	h := sha1.New()
+	io.WriteString(h, u.Password)
+	h2 := sha1.New()
+	h2.Write(h.Sum(nil))
 
-	return users.User, nil
+	u.HashedPassword = strings.ToUpper(strings.Replace(fmt.Sprintf("*% x", h2.Sum(nil)), " ","", -1))
+}
+
+func validateUsers(users []User) []User {
+	var resultUsers []User
+	for _, u := range users {
+		if u.Username != "" && u.Network != "" && u.Database != "" && u.Database != "" && u.Table != "" && len(u.Privileges) > 0 {
+			if u.Password != "" {
+				u.calcUserHashPassword()
+			}
+			resultUsers = append(resultUsers, u)
+		}
+	}
+	return resultUsers
 }
 
 func getUsersToRemove(usersFromConf, usersFromDB []User) []User {
@@ -126,7 +137,7 @@ func getUsersToAdd(usersFromConf, usersFromDB []User) []User {
 }
 
 func (u *User) dropUser(tx *sql.Tx, execute bool) bool {
-	query := "DROP USER '" + u.Username + "'@'" + u.Host + "'"
+	query := "DROP USER '" + u.Username + "'@'" + u.Network + "'"
 	if execute {
 		_, err := tx.Exec(query)
 		if err != nil {
@@ -141,7 +152,11 @@ func (u *User) dropUser(tx *sql.Tx, execute bool) bool {
 
 func (u *User) addUser(tx *sql.Tx, execute bool) bool {
 	query := "GRANT " + strings.Join(u.Privileges, ", ") + " ON " + u.Database + "." + u.Table + " TO '" +
-	u.Username + "'@'" + u.Host + "' IDENTIFIED BY PASSWORD '" + u.Password + "'"
+		u.Username + "'@'" + u.Network + "' IDENTIFIED BY PASSWORD '" + u.HashedPassword + "'"
+
+	if u.GrantOption {
+		query += " WITH GRANT OPTION"
+	}
 	if execute {
 		_, err := tx.Exec(query)
 		if err != nil {

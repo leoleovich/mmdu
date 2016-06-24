@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/BurntSushi/toml"
 	"fmt"
 	"database/sql"
 	"log"
@@ -15,15 +14,6 @@ type Database struct {
 
 type DatabaseConfig struct {
 	Database []Database
-}
-
-func getDatabasesFromConfig() ([]Database, error) {
-	var databases DatabaseConfig
-	if _, err := toml.DecodeFile("/etc/mmdu/mmdu.toml", &databases); err != nil {
-		return databases.Database, err
-	}
-
-	return databases.Database, nil
 }
 
 func getDatabasesFromUsers(users []User) []Database {
@@ -110,7 +100,7 @@ func getDatabasesToAdd(databasesFromConf, databasesFromDB []Database) []Database
 				}
 			}
 		}
-		if !found {
+		if !found && !strings.Contains(dbConf.Name, "%") {
 			databasesToAdd = append(databasesToAdd, dbConf)
 		}
 	}

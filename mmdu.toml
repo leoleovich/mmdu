@@ -1,3 +1,10 @@
+[access]
+username="root"
+password="root"
+# initPassword = "myOldPassword"
+host="localhost"
+port=3306
+
 [[database]]
 name = "information_schema"
 [[database]]
@@ -7,16 +14,16 @@ name = "performance_schema"
 
 [[user]]
 username = "oleg"
-host = "10.%"
-password = "*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B"
-database = "oleg"
+network = "10.%"
+password = "oleg"
+database = "oleg%"
 table = "*"
 privileges = ["USAGE"]
 
 [[user]]
 username = "root"
-host = "127.0.0.1"
-password = "*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B"
+network = "127.0.0.1"
+password = "root"
 database = "*"
 table = "*"
 privileges = ["ALL PRIVILEGES"]
@@ -24,8 +31,8 @@ grantOption = true
 
 [[user]]
 username = "root"
-host = "localhost"
-password = "*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B"
+password = "root"
+network = "localhost"
 database = "*"
 table = "*"
 privileges = ["ALL PRIVILEGES"]
