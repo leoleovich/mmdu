@@ -1,15 +1,32 @@
+[[database]]
+name = "information_schema"
+[[database]]
+name = "mysql"
+[[database]]
+name = "performance_schema"
+
 [[user]]
-username = "test"
-host = "%"
-password = "*51310A7328C24D76AB4AC8C2BB874F70AC744F44"
-objectAccess = "*.*"
+username = "oleg"
+host = "10.%"
+password = "*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B"
+database = "oleg"
+table = "*"
+privileges = ["USAGE"]
+
+[[user]]
+username = "root"
+host = "127.0.0.1"
+password = "*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B"
+database = "*"
+table = "*"
 privileges = ["ALL PRIVILEGES"]
-grantOptions = false
+grantOption = true
 
 [[user]]
 username = "root"
 host = "localhost"
-password = "*A8A18A101616EEE450280655C32FA18719970CD8"
-objectAccess = "*.*"
+password = "*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B"
+database = "*"
+table = "*"
 privileges = ["ALL PRIVILEGES"]
-grantOptions = true
+grantOption = true

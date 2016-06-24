@@ -4,6 +4,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
 	"os"
+	"flag"
 	"fmt"
 )
 
@@ -14,17 +15,46 @@ const showAllDatabases = "SHOW DATABASES"
 
 
 func main() {
-	db, err := sql.Open("mysql", "test:yeiDiepu1shieJee@tcp(10.0.66.31:3306)/")
+	var execute bool
+	flag.BoolVar(&execute, "e", false, "Execute. If specified - changes will be applied")
+	flag.Parse()
+
+	db, err := sql.Open("mysql", "root@tcp(localhost:3306)/")
 	if err != nil {
 		os.Exit(1)
 	}
 	defer db.Close()
 
-	usersFromConf := getAllUsersFromConfig()
-	usersFromDB := getAllUsersFromDB(db)
+	tx, err := db.Begin()
+	if err != nil {
+		fmt.Println("Failed to start transaction", err.Error())
+		os.Exit(1)
+	}
 
-	databasesFromConf := removeDuplicatesDatabases(append(getDatabasesFromUsers(usersFromConf), getDatabasesFromConfig()...))
-	databasesFromDB := getDatabasesFromDB(db)
+
+	usersFromDB, err := getAllUsersFromDB(db)
+	if err != nil {
+		fmt.Println("Failed during execution " + selectAllUsers, err.Error())
+		os.Exit(2)
+	}
+
+	databasesFromDB, err := getDatabasesFromDB(db)
+	if err != nil {
+		fmt.Println("Failed during execution " + showAllDatabases, err.Error())
+		os.Exit(2)
+	}
+
+	usersFromConf, err := getAllUsersFromConfig()
+	if err != nil {
+		fmt.Println("Failed to parse config file", err.Error())
+		os.Exit(2)
+	}
+	databasesFromConfigDB, err := getDatabasesFromConfig()
+	if err != nil {
+		fmt.Println("Failed to parse config file", err.Error())
+		os.Exit(2)
+	}
+	databasesFromConf := removeDuplicateDatabases(append(getDatabasesFromUsers(usersFromConf), databasesFromConfigDB...))
 
 	usersToRemove := getUsersToRemove(usersFromConf, usersFromDB)
 	usersToAdd := getUsersToAdd(usersFromConf, usersFromDB)
@@ -32,9 +62,29 @@ func main() {
 	databasesToRemove := getDatabasesToRemove(databasesFromConf, databasesFromDB)
 	databasesToAdd := getDatabasesToAdd(databasesFromConf, databasesFromDB)
 
-	fmt.Println(usersToRemove)
-	fmt.Println(usersToAdd)
+	for _, user := range usersToRemove {
+		if ! user.dropUser(tx, execute) {
+			tx.Rollback()
+		}
+	}
 
-	fmt.Println(databasesToRemove)
-	fmt.Println(databasesToAdd)
+	for _, user := range usersToAdd {
+		if ! user.addUser(tx, execute) {
+			tx.Rollback()
+		}
+	}
+
+	for _, database := range databasesToRemove {
+		if ! database.dropDatabase(tx, execute) {
+			tx.Rollback()
+		}
+	}
+
+	for _, database := range databasesToAdd {
+		if ! database.addDatabase(tx, execute) {
+			tx.Rollback()
+		}
+	}
+
+	tx.Commit()
 }

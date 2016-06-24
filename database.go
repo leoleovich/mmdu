@@ -17,13 +17,13 @@ type DatabaseConfig struct {
 	Database []Database
 }
 
-func getDatabasesFromConfig() []Database {
+func getDatabasesFromConfig() ([]Database, error) {
 	var databases DatabaseConfig
-	if _, err := toml.DecodeFile("./mmdu.toml", &databases); err != nil {
-		fmt.Println("Failed to parse config file", err.Error())
+	if _, err := toml.DecodeFile("/etc/mmdu/mmdu.toml", &databases); err != nil {
+		return databases.Database, err
 	}
 
-	return databases.Database
+	return databases.Database, nil
 }
 
 func getDatabasesFromUsers(users []User) []Database {
@@ -39,11 +39,11 @@ func getDatabasesFromUsers(users []User) []Database {
 	return databases
 }
 
-func getDatabasesFromDB(db *sql.DB) []Database  {
+func getDatabasesFromDB(db *sql.DB) ([]Database, error)  {
 	var databases []Database
 	rows, err := db.Query(showAllDatabases)
 	if err != nil {
-		log.Fatal(err)
+		return databases, err
 	}
 	defer rows.Close()
 
@@ -56,12 +56,13 @@ func getDatabasesFromDB(db *sql.DB) []Database  {
 
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		return databases, err
 	}
-	return databases
+
+	return databases, nil
 }
 
-func removeDuplicatesDatabases(dbs []Database) []Database {
+func removeDuplicateDatabases(dbs []Database) []Database {
 	result := []Database{}
 	seen := map[Database]bool{}
 	for _, db := range dbs {
@@ -70,6 +71,7 @@ func removeDuplicatesDatabases(dbs []Database) []Database {
 			seen[db] = true
 		}
 	}
+
 	return result
 }
 
@@ -88,6 +90,7 @@ func getDatabasesToRemove(databasesFromConf, databasesFromDB []Database) []Datab
 			databasesToRemove = append(databasesToRemove, dbDB)
 		}
 	}
+
 	return databasesToRemove
 }
 
@@ -111,22 +114,35 @@ func getDatabasesToAdd(databasesFromConf, databasesFromDB []Database) []Database
 			databasesToAdd = append(databasesToAdd, dbConf)
 		}
 	}
+
 	return databasesToAdd
 }
 
 
-func (d *Database) dropDatabase(db *sql.DB) bool {
-	_, err := db.Exec("drop database " + d.Name)
-	if err != nil {
-		return false
+func (d *Database) dropDatabase(tx *sql.Tx, execute bool) bool {
+	query := "DROP DATABASE " + d.Name
+	if execute {
+		_, err := tx.Exec(query)
+		if err != nil {
+			return false
+		}
+	} else {
+		fmt.Println(query)
 	}
+
 	return true
 }
 
-func (d *Database) addDatabase(db *sql.DB) bool {
-	_, err := db.Exec("create database " + d.Name)
-	if err != nil {
-		return false
+func (d *Database) addDatabase(tx *sql.Tx, execute bool) bool {
+	query := "CREATE DATABASE " + d.Name
+	if execute {
+		_, err := tx.Exec(query)
+		if err != nil {
+			return false
+		}
+	} else {
+		fmt.Println(query)
 	}
+
 	return true
 }

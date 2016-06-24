@@ -24,23 +24,6 @@ type UsersConfig struct {
 	User []User
 }
 
-func (u *User) dropUser(db *sql.DB) bool {
-	_, err := db.Exec("DROP USER " + u.Username + "@" + u.Password)
-	if err != nil {
-		return false
-	}
-	return true
-}
-
-func (u *User) addUser(db *sql.DB) bool {
-	_, err := db.Exec("GRANT " + strings.Join(u.Privileges, ", ") + " ON " + u.Database + "." + u.Table + " TO '" +
-		u.Username + "'@'" + u.Host + "' IDENTIFIED BY PASSWORD '" + u.Password + "'")
-	if err != nil {
-		return false
-	}
-	return true
-}
-
 func getUserFromDatabase(username, host string, db *sql.DB) (User, error) {
 
 	var grantPriv, grantLine string
@@ -65,14 +48,15 @@ func getUserFromDatabase(username, host string, db *sql.DB) (User, error) {
 			user.Table = re.ReplaceAllString(grantLine, "$3")
 		}
 	}
+
 	return user, nil
 }
 
-func getAllUsersFromDB(db *sql.DB) []User {
+func getAllUsersFromDB(db *sql.DB) ([]User, error) {
 	var users []User
 	rows, err := db.Query(selectAllUsers)
 	if err != nil {
-		log.Fatal(err)
+		return users, err
 	}
 	defer rows.Close()
 
@@ -82,23 +66,27 @@ func getAllUsersFromDB(db *sql.DB) []User {
 			log.Fatal(err)
 		}
 		user, err := getUserFromDatabase(username, host, db)
-		if err == nil {
+		if err != nil {
+			return users, err
+		} else {
 			users = append(users, user)
 		}
 
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		return users, err
 	}
-	return users
+
+	return users, nil
 }
 
-func getAllUsersFromConfig() []User {
+func getAllUsersFromConfig() ([]User, error) {
 	var users UsersConfig
-	if _, err := toml.DecodeFile("./mmdu.toml", &users); err != nil {
-		fmt.Println("Failed to parse config file", err.Error())
+	if _, err := toml.DecodeFile("/etc/mmdu/mmdu.toml", &users); err != nil {
+		return users.User, err
 	}
-	return users.User
+
+	return users.User, nil
 }
 
 func getUsersToRemove(usersFromConf, usersFromDB []User) []User {
@@ -115,6 +103,7 @@ func getUsersToRemove(usersFromConf, usersFromDB []User) []User {
 			usersToRemove = append(usersToRemove, userDB)
 		}
 	}
+
 	return usersToRemove
 }
 
@@ -132,5 +121,35 @@ func getUsersToAdd(usersFromConf, usersFromDB []User) []User {
 			usersToAdd = append(usersToAdd, userConf)
 		}
 	}
+
 	return usersToAdd
+}
+
+func (u *User) dropUser(tx *sql.Tx, execute bool) bool {
+	query := "DROP USER '" + u.Username + "'@'" + u.Host + "'"
+	if execute {
+		_, err := tx.Exec(query)
+		if err != nil {
+			return false
+		}
+	} else {
+		fmt.Println(query)
+	}
+
+	return true
+}
+
+func (u *User) addUser(tx *sql.Tx, execute bool) bool {
+	query := "GRANT " + strings.Join(u.Privileges, ", ") + " ON " + u.Database + "." + u.Table + " TO '" +
+	u.Username + "'@'" + u.Host + "' IDENTIFIED BY PASSWORD '" + u.Password + "'"
+	if execute {
+		_, err := tx.Exec(query)
+		if err != nil {
+			return false
+		}
+	} else {
+		fmt.Println(query)
+	}
+
+	return true
 }
