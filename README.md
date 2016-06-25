@@ -19,7 +19,6 @@ You need to update settings and add your own data into int:
   
 - **[[database]]** - Databases which need to be in mysql.
   - name - name of database to manage
-  I strongly recommend you to keep **information_schema**, **performance_schema**, **mysql** in file. Without them mysql server will not work. 
   
 - **[[user]]** - Users which need to be in mysql.
   You can specify *username*, *network*, *password*, *hashedPassword*, *database*, *table*, *privileges*, *grantOption*  

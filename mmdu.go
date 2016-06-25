@@ -31,6 +31,7 @@ func main() {
 		os.Exit(2)
 	}
 
+	defaultDatabases := []Database{Database{"information_schema"}, Database{"mysql"}, Database{"performance_schema"}}
 	validatedUsers := validateUsers(conf.User)
 
 	db := conf.Access.connectAndCheck()
@@ -47,8 +48,9 @@ func main() {
 		os.Exit(2)
 	}
 
-
-	databasesFromConf := removeDuplicateDatabases(append(getDatabasesFromUsers(validatedUsers), conf.Database...))
+	// Merge from 3 sources: default, from DbConfig and from UserConfg
+	databasesFromConf := removeDuplicateDatabases(
+		append(append(defaultDatabases, conf.Database...), getDatabasesFromUsers(validatedUsers)...))
 
 	tx, err := db.Begin()
 	if err != nil {
