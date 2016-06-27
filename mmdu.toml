@@ -6,12 +6,6 @@ host="localhost"
 port=3306
 
 [[database]]
-name = "information_schema"
-[[database]]
-name = "mysql"
-[[database]]
-name = "performance_schema"
-[[database]]
 name = "oleg_test"
 
 [[user]]
