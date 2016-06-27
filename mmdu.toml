@@ -23,7 +23,7 @@ database = "oleg%"
 table = "*"
 privileges = ["SELECT", "UPDATE"]
 [[user.permissions]]
-database = "test"
+database = "qwerty"
 table = "*"
 privileges = ["SELECT"]
 

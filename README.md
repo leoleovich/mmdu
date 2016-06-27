@@ -5,7 +5,29 @@ This service will ensure, that only users and databases defined in config file w
 Default behavior is to keep data untouched but report about differences.  
 Config file can be generated via puppet, chef, salt, ansible  or any other config management system.  
 
-Inspired by puppet mysql module, but without known architectural problems.
+Inspired by puppet mysql module, but without known architectural problems.  
+
+Effect on freshly-installed mysql-host with **mmdu** config from this repository will look like this:  
+```
+$ mmdu # Run to check  
+DROP USER 'root'@'127.0.0.1'  
+DROP USER 'root'@'::1'  
+DROP USER ''@'aw-db01.oleg'  
+DROP USER 'root'@'aw-db01.oleg'  
+DROP USER ''@'localhost'  
+DROP USER 'debian-sys-maint'@'localhost'  
+DROP USER 'root'@'localhost'  
+GRANT SELECT, UPDATE ON `oleg%`.* TO 'oleg'@'10.%' IDENTIFIED BY PASSWORD '*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B'  
+GRANT SELECT ON qwerty.* TO 'oleg'@'10.%' IDENTIFIED BY PASSWORD '*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B'  
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY PASSWORD '*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B' WITH GRANT OPTION  
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B' WITH GRANT OPTION  
+DROP DATABASE test  
+CREATE DATABASE oleg_test  
+CREATE DATABASE qwerty  
+$ mmdu -e # Run to execute  
+$ mmdu # Run to check  
+$  
+```
 
 # Options
  - **-e** - execute/apply all changes
