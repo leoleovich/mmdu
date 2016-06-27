@@ -30,10 +30,12 @@ You need to update settings and add your own data into configuration file */etc/
   - network - address, from which mysql allows to connect this user. e.g. *8.8.%*  
   - password - plain-text password. I would not recommend to have it. Better use *hashedPassword*. If specifyed - *hashedPassword* will be ignored  
   - hashedPassword - hashed password (sha1 encrypted). You can get it via ```mysql> select password('password')``` e.g. *\*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B*  
+  - grantOption - true or false flag for users "WITH GRANT OPTION". Default *false*  
+  
+- **[[user.permissions]]**
   - database - database to which user has an access. **mmdu** will ensure this database exist **[[database]]**. e.g. *oleg%* or *\**
   - table - table to which user has an access. e.g. "*"
   - privileges - list of privileges for user. e.g. ["SELECT", "INSERT"]
-  - grantOption - true or false flag for users "WITH GRANT OPTION". Default *false*
 
 # Installation
 

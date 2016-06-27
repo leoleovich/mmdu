@@ -15,14 +15,45 @@ type DatabaseConfig struct {
 	Database []Database
 }
 
+func (d *Database) dropDatabase(tx *sql.Tx, execute bool) bool {
+	query := "DROP DATABASE " + d.Name
+	if execute {
+		_, err := tx.Exec(query)
+		if err != nil {
+			return false
+		}
+	} else {
+		fmt.Println(query)
+	}
+
+	return true
+}
+
+func (d *Database) addDatabase(tx *sql.Tx, execute bool) bool {
+	query := "CREATE DATABASE " + d.Name
+	if execute {
+		_, err := tx.Exec(query)
+		if err != nil {
+			return false
+		}
+	} else {
+		fmt.Println(query)
+	}
+
+	return true
+}
+
 func getDatabasesFromUsers(users []User) []Database {
 	var databases []Database
 
 	for _, user := range users {
-		if user.Database == "*" {
-			continue
+		for _, permission := range user.Permissions {
+			if permission.Database == "*" {
+				continue
+			} else {
+				databases = append(databases, Database{permission.Database})
+			}
 		}
-		databases = append(databases, Database{user.Database})
 	}
 
 	return databases
@@ -108,33 +139,4 @@ func getDatabasesToAdd(databasesFromConf, databasesFromDB []Database) []Database
 	}
 
 	return databasesToAdd
-}
-
-
-func (d *Database) dropDatabase(tx *sql.Tx, execute bool) bool {
-	query := "DROP DATABASE " + d.Name
-	if execute {
-		_, err := tx.Exec(query)
-		if err != nil {
-			return false
-		}
-	} else {
-		fmt.Println(query)
-	}
-
-	return true
-}
-
-func (d *Database) addDatabase(tx *sql.Tx, execute bool) bool {
-	query := "CREATE DATABASE " + d.Name
-	if execute {
-		_, err := tx.Exec(query)
-		if err != nil {
-			return false
-		}
-	} else {
-		fmt.Println(query)
-	}
-
-	return true
 }

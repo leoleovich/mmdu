@@ -18,24 +18,32 @@ name = "oleg_test"
 username = "oleg"
 network = "10.%"
 hashedPassword = "*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B"
+[[user.permissions]]
 database = "oleg%"
-table = "*"
-privileges = ["USAGE"]
+table = "la%"
+privileges = ["SELECT", "UPDATE"]
+[[user.permissions]]
+database = "test"
+table = "qqq"
+privileges = ["SELECT"]
 
 [[user]]
 username = "root"
 network = "127.0.0.1"
 password = "root"
+grantOption = true
+[[user.permissions]]
 database = "*"
 table = "*"
 privileges = ["ALL PRIVILEGES"]
-grantOption = true
+
 
 [[user]]
 username = "root"
 password = "root"
 network = "localhost"
+grantOption = true
+[[user.permissions]]
 database = "*"
 table = "*"
 privileges = ["ALL PRIVILEGES"]
-grantOption = true

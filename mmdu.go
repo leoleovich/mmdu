@@ -28,23 +28,27 @@ func main() {
 	var conf Config
 	if _, err := toml.DecodeFile(configFile, &conf); err != nil {
 		fmt.Println("Failed to parse config file", err.Error())
-		os.Exit(2)
+		os.Exit(1)
 	}
 
 	defaultDatabases := []Database{Database{"information_schema"}, Database{"mysql"}, Database{"performance_schema"}}
-	validatedUsers := validateUsers(conf.User)
+	validatedUsers, err := validateUsers(conf.User)
+	if err != nil {
+		fmt.Println("Error during validation of user list:", err.Error())
+		os.Exit(1)
+	}
 
 	db := conf.Access.connectAndCheck()
 
 	usersFromDB, err := getAllUsersFromDB(db)
 	if err != nil {
-		fmt.Println("Failed during execution "+selectAllUsers, err.Error())
+		fmt.Println("Failed during execution " + selectAllUsers, err.Error())
 		os.Exit(2)
 	}
 
 	databasesFromDB, err := getDatabasesFromDB(db)
 	if err != nil {
-		fmt.Println("Failed during execution "+showAllDatabases, err.Error())
+		fmt.Println("Failed during execution " + showAllDatabases, err.Error())
 		os.Exit(2)
 	}
 

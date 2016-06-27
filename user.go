@@ -5,10 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-	"log"
 	"reflect"
-	"regexp"
 	"strings"
+	"errors"
 )
 
 type User struct {
@@ -16,34 +15,119 @@ type User struct {
 	Network        string
 	Password       string
 	HashedPassword string
-	Database       string
-	Table          string
-	Privileges     []string
+	Permissions    []Permission
 	GrantOption    bool
 }
 
-func getUserFromDatabase(username, host string, db *sql.DB) (User, error) {
+func (u *User) calcUserHashPassword() {
+	h := sha1.New()
+	io.WriteString(h, u.Password)
+	h2 := sha1.New()
+	h2.Write(h.Sum(nil))
 
-	var grantPriv, grantLine string
+	u.HashedPassword = strings.ToUpper(strings.Replace(fmt.Sprintf("*% x", h2.Sum(nil)), " ", "", -1))
+}
+
+func (u *User) compare(usr *User) bool {
+	if u.Username == usr.Username && u.Network == usr.Network && u.HashedPassword == usr.HashedPassword &&
+		reflect.DeepEqual(u.Permissions, usr.Permissions) {
+		return true
+	} else {
+		return false
+	}
+
+}
+
+func (u *User) dropUser(tx *sql.Tx, execute bool) bool {
+	query := "DROP USER '" + u.Username + "'@'" + u.Network + "'"
+	if execute {
+		_, err := tx.Exec(query)
+		if err != nil {
+			return false
+		}
+	} else {
+		fmt.Println(query)
+	}
+
+	return true
+}
+
+func (u *User) addUser(tx *sql.Tx, execute bool) bool {
+
+	for _, permission := range u.Permissions {
+		database := permission.Database
+		table := permission.Table
+		privileges := permission.Privileges
+
+		if strings.Contains(database, "%") {
+			database = "`" + database + "`"
+		}
+
+		if strings.Contains(table, "%") {
+			table = "`" + table + "`"
+		}
+
+		query := "GRANT " + strings.Join(privileges, ", ") + " ON " + database + "." + table + " TO '" +
+		u.Username + "'@'" + u.Network + "' IDENTIFIED BY PASSWORD '" + u.HashedPassword + "'"
+
+		if u.GrantOption {
+			query += " WITH GRANT OPTION"
+		}
+
+		if execute {
+			_, err := tx.Exec(query)
+			if err != nil {
+				return false
+			}
+		} else {
+			fmt.Println(query)
+		}
+	}
+
+	return true
+}
+
+func getUserFromDatabase(username, network string, db *sql.DB) (User, error) {
+
+	var grantPriv string
 	var user User
-	query := "SELECT User, Host, Password, Grant_priv FROM mysql.user WHERE User='" + username + "' and Host='" + host + "'"
+	query := "SELECT User, Host, Password, Grant_priv FROM mysql.user WHERE User='" + username + "' and Host='" + network + "'"
 	err := db.QueryRow(query).Scan(&user.Username, &user.Network, &user.HashedPassword, &grantPriv)
 	if err != nil {
-		fmt.Println("Error querying "+query+": ", err.Error())
+		fmt.Println("Error querying " + query + ": ", err.Error())
 		return user, err
 	} else {
 		if grantPriv == "Y" {
 			user.GrantOption = true
 		}
-		err = db.QueryRow(fmt.Sprint("SHOW GRANTS FOR '" + username + "'@'" + host + "'")).Scan(&grantLine)
+		rows, err := db.Query("SHOW GRANTS FOR '" + username + "'@'" + network + "'")
 		if err != nil {
 			fmt.Println(err.Error())
 			return user, err
 		} else {
-			re := regexp.MustCompile("GRANT (.*) ON (.*)\\.(.*) TO.*")
-			user.Privileges = strings.Split(re.ReplaceAllString(grantLine, "$1"), ",")
-			user.Database = re.ReplaceAllString(grantLine, "$2")
-			user.Table = re.ReplaceAllString(grantLine, "$3")
+			defer rows.Close()
+			var grantLines []string
+			for rows.Next() {
+				var grantLine string
+				if err := rows.Scan(&grantLine); err != nil {
+					return user, err
+				}
+				grantLines = append(grantLines, grantLine)
+			}
+			var permissions []Permission
+			if len(grantLines) == 1 {
+				var tmpPerm Permission
+				tmpPerm.parseUserFromGrantLine(grantLines[0])
+				permissions = append(permissions, tmpPerm)
+
+			} else {
+				for _, grantLine := range grantLines[1:] {
+					var tmpPerm Permission
+					tmpPerm.parseUserFromGrantLine(grantLine)
+					permissions = append(permissions, tmpPerm)
+				}
+			}
+			user.Permissions = permissions
 		}
 	}
 	return user, nil
@@ -60,7 +144,7 @@ func getAllUsersFromDB(db *sql.DB) ([]User, error) {
 	for rows.Next() {
 		var username, host string
 		if err := rows.Scan(&username, &host); err != nil {
-			log.Fatal(err)
+			return users, err
 		}
 		user, err := getUserFromDatabase(username, host, db)
 		if err != nil {
@@ -68,7 +152,6 @@ func getAllUsersFromDB(db *sql.DB) ([]User, error) {
 		} else {
 			users = append(users, user)
 		}
-
 	}
 	if err := rows.Err(); err != nil {
 		return users, err
@@ -77,37 +160,25 @@ func getAllUsersFromDB(db *sql.DB) ([]User, error) {
 	return users, nil
 }
 
-func (u *User) calcUserHashPassword() {
-	h := sha1.New()
-	io.WriteString(h, u.Password)
-	h2 := sha1.New()
-	h2.Write(h.Sum(nil))
-
-	u.HashedPassword = strings.ToUpper(strings.Replace(fmt.Sprintf("*% x", h2.Sum(nil)), " ", "", -1))
-}
-
-func (u *User) compare(usr *User) bool {
-	if u.Username == usr.Username && u.Network == usr.Network && u.HashedPassword == usr.HashedPassword &&
-		u.Database == usr.Database && u.Table == usr.Table && u.GrantOption == usr.GrantOption &&
-		reflect.DeepEqual(u.Privileges, u.Privileges) {
-		return true
-	} else {
-		return false
-	}
-
-}
-
-func validateUsers(users []User) []User {
+func validateUsers(users []User) ([]User, error) {
 	var resultUsers []User
 	for _, u := range users {
-		if u.Username != "" && u.Network != "" && u.Database != "" && u.Database != "" && u.Table != "" && len(u.Privileges) > 0 {
+		if u.Username != "" && u.Network != "" && len(u.Permissions) > 0 && (u.Password != "" || u.HashedPassword != "") {
+			for _, permission := range u.Permissions {
+				if permission.Database == "" || permission.Database == "" || len(permission.Privileges) == 0 {
+					return resultUsers, errors.New("Permissions for user set incorrectly")
+				}
+			}
 			if u.Password != "" {
 				u.calcUserHashPassword()
 			}
 			resultUsers = append(resultUsers, u)
+		} else {
+			errorDescription := "Username, Network, Permissions, Passowrd or HashedPassword must be set set"
+			return resultUsers, errors.New(errorDescription)
 		}
 	}
-	return resultUsers
+	return resultUsers, nil
 }
 
 func getUsersToRemove(usersFromConf, usersFromDB []User) []User {
@@ -144,48 +215,4 @@ func getUsersToAdd(usersFromConf, usersFromDB []User) []User {
 	}
 
 	return usersToAdd
-}
-
-func (u *User) dropUser(tx *sql.Tx, execute bool) bool {
-	query := "DROP USER '" + u.Username + "'@'" + u.Network + "'"
-	if execute {
-		_, err := tx.Exec(query)
-		if err != nil {
-			return false
-		}
-	} else {
-		fmt.Println(query)
-	}
-
-	return true
-}
-
-func (u *User) addUser(tx *sql.Tx, execute bool) bool {
-	database := u.Database
-	table := u.Table
-
-	if strings.Contains(u.Database, "%") {
-		database = "`" + u.Database + "`"
-	}
-
-	if strings.Contains(u.Table, "%") {
-		table = "`" + u.Table + "`"
-	}
-
-	query := "GRANT " + strings.Join(u.Privileges, ", ") + " ON " + database + "." + table + " TO '" +
-		u.Username + "'@'" + u.Network + "' IDENTIFIED BY PASSWORD '" + u.HashedPassword + "'"
-
-	if u.GrantOption {
-		query += " WITH GRANT OPTION"
-	}
-	if execute {
-		_, err := tx.Exec(query)
-		if err != nil {
-			return false
-		}
-	} else {
-		fmt.Println(query)
-	}
-
-	return true
 }
