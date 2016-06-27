@@ -30,7 +30,19 @@ func (u *User) calcUserHashPassword() {
 
 func (u *User) compare(usr *User) bool {
 	if u.Username == usr.Username && u.Network == usr.Network && u.HashedPassword == usr.HashedPassword &&
-		reflect.DeepEqual(u.Permissions, usr.Permissions) {
+		len(u.Permissions) == len(usr.Permissions) {
+		for _, up := range u.Permissions {
+			var found bool
+			for _, uperm := range usr.Permissions {
+				if reflect.DeepEqual(up, uperm) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return false
+			}
+		}
 		return true
 	} else {
 		return false

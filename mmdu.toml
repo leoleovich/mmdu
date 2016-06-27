@@ -20,11 +20,11 @@ network = "10.%"
 hashedPassword = "*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B"
 [[user.permissions]]
 database = "oleg%"
-table = "la%"
+table = "*"
 privileges = ["SELECT", "UPDATE"]
 [[user.permissions]]
 database = "test"
-table = "qqq"
+table = "*"
 privileges = ["SELECT"]
 
 [[user]]
