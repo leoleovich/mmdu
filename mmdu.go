@@ -39,6 +39,7 @@ func main() {
 	}
 
 	db := conf.Access.connectAndCheck()
+	defer db.Close()
 
 	usersFromDB, err := getAllUsersFromDB(db)
 	if err != nil {
@@ -56,11 +57,6 @@ func main() {
 	databasesFromConf := removeDuplicateDatabases(
 		append(append(defaultDatabases, conf.Database...), getDatabasesFromUsers(validatedUsers)...))
 
-	tx, err := db.Begin()
-	if err != nil {
-		fmt.Println("Failed to start transaction", err.Error())
-		os.Exit(2)
-	}
 
 	usersToRemove := getUsersToRemove(validatedUsers, usersFromDB)
 	usersToAdd := getUsersToAdd(validatedUsers, usersFromDB)
@@ -68,29 +64,38 @@ func main() {
 	databasesToRemove := getDatabasesToRemove(databasesFromConf, databasesFromDB)
 	databasesToAdd := getDatabasesToAdd(databasesFromConf, databasesFromDB)
 
-	for _, user := range usersToRemove {
-		if !user.dropUser(tx, execute) {
-			tx.Rollback()
+	if len(usersToRemove) == 0 && len(usersToAdd) == 0 && len(databasesToRemove) == 0 && len(databasesToAdd) == 0 {
+		fmt.Println("Nothing to do")
+	} else {
+		tx, err := db.Begin()
+		if err != nil {
+			fmt.Println("Failed to start transaction", err.Error())
+			os.Exit(2)
 		}
-	}
 
-	for _, user := range usersToAdd {
-		if !user.addUser(tx, execute) {
-			tx.Rollback()
+		for _, database := range databasesToRemove {
+			if !database.dropDatabase(tx, execute) {
+				tx.Rollback()
+			}
 		}
-	}
 
-	for _, database := range databasesToRemove {
-		if !database.dropDatabase(tx, execute) {
-			tx.Rollback()
+		for _, database := range databasesToAdd {
+			if !database.addDatabase(tx, execute) {
+				tx.Rollback()
+			}
 		}
-	}
 
-	for _, database := range databasesToAdd {
-		if !database.addDatabase(tx, execute) {
-			tx.Rollback()
+		for _, user := range usersToRemove {
+			if !user.dropUser(tx, execute) {
+				tx.Rollback()
+			}
 		}
-	}
 
-	tx.Commit()
+		for _, user := range usersToAdd {
+			if !user.addUser(tx, execute) {
+				tx.Rollback()
+			}
+		}
+		tx.Commit()
+	}
 }

@@ -10,6 +10,9 @@ Inspired by puppet mysql module, but without known architectural problems.
 Effect on freshly-installed mysql-host with **mmdu** config from this repository will look like this:  
 ```
 $ mmdu # Run to check  
+DROP DATABASE test  
+CREATE DATABASE oleg_test  
+CREATE DATABASE qwerty  
 DROP USER 'root'@'127.0.0.1'  
 DROP USER 'root'@'::1'  
 DROP USER ''@'aw-db01.oleg'  
@@ -21,13 +24,18 @@ GRANT SELECT, UPDATE ON `oleg%`.* TO 'oleg'@'10.%' IDENTIFIED BY PASSWORD '*F41E
 GRANT SELECT ON qwerty.* TO 'oleg'@'10.%' IDENTIFIED BY PASSWORD '*F41E614E894A46E0FB7317B1C8CB6CEA97415C7B'  
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY PASSWORD '*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B' WITH GRANT OPTION  
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' IDENTIFIED BY PASSWORD '*81F5E21E35407D884A6CD4A731AEBFB6AF209E1B' WITH GRANT OPTION  
-DROP DATABASE test  
-CREATE DATABASE oleg_test  
-CREATE DATABASE qwerty  
 $ mmdu -e # Run to execute  
 $ mmdu # Run to check  
 $  
+```  
+All actions happen in single transaction. If something went wrong - changes will not be applied.  
+This is also make possible to change root-user password and not being disconnected.  
+
+Second run will give us:  
 ```
+$ mmdu # Same will be with mmdu -e in this case  
+Nothing to do  
+```  
 
 # Options
  - **-e** - execute/apply all changes
