@@ -186,7 +186,7 @@ func validateUsers(users []User) ([]User, error) {
 			}
 			resultUsers = append(resultUsers, u)
 		} else {
-			errorDescription := "Username, Network, Permissions, Passowrd or HashedPassword must be set set"
+			errorDescription := "Username, Network, Permissions, Passowrd or HashedPassword must be set"
 			return resultUsers, errors.New(errorDescription)
 		}
 	}
