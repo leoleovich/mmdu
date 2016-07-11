@@ -106,7 +106,6 @@ func getUserFromDatabase(username, network string, db *sql.DB) (User, error) {
 	query := "SELECT User, Host, Password, Grant_priv FROM mysql.user WHERE User='" + username + "' and Host='" + network + "'"
 	err := db.QueryRow(query).Scan(&user.Username, &user.Network, &user.HashedPassword, &grantPriv)
 	if err != nil {
-		fmt.Println("Error querying " + query + ": ", err.Error())
 		return user, err
 	} else {
 		if grantPriv == "Y" {
@@ -114,7 +113,6 @@ func getUserFromDatabase(username, network string, db *sql.DB) (User, error) {
 		}
 		rows, err := db.Query("SHOW GRANTS FOR '" + username + "'@'" + network + "'")
 		if err != nil {
-			fmt.Println(err.Error())
 			return user, err
 		} else {
 			defer rows.Close()

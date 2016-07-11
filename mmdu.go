@@ -43,13 +43,13 @@ func main() {
 
 	usersFromDB, err := getAllUsersFromDB(db)
 	if err != nil {
-		fmt.Println("Failed during execution " + selectAllUsers, err.Error())
+		fmt.Println("Failed to get users from DB" , err.Error())
 		os.Exit(2)
 	}
 
 	databasesFromDB, err := getDatabasesFromDB(db)
 	if err != nil {
-		fmt.Println("Failed during execution " + showAllDatabases, err.Error())
+		fmt.Println("Failed to get databases from DB", err.Error())
 		os.Exit(2)
 	}
 
