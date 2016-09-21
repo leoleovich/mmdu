@@ -53,7 +53,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	// Merge from 3 sources: default, from DbConfig and from UserConfg
+	// Merge from 3 sources: default, from DbConfig and from UserConfig
 	databasesFromConf := removeDuplicateDatabases(
 		append(append(defaultDatabases, conf.Database...), getDatabasesFromUsers(validatedUsers)...))
 
@@ -96,6 +96,7 @@ func main() {
 				tx.Rollback()
 			}
 		}
+		_, err = tx.Exec("select * from mysql.user ; select * from mysql.user;")
 		tx.Commit()
 	}
 }
