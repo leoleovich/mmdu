@@ -57,7 +57,6 @@ func main() {
 	databasesFromConf := removeDuplicateDatabases(
 		append(append(defaultDatabases, conf.Database...), getDatabasesFromUsers(validatedUsers)...))
 
-
 	usersToRemove := getUsersToRemove(validatedUsers, usersFromDB)
 	usersToAdd := getUsersToAdd(validatedUsers, usersFromDB)
 

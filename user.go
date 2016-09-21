@@ -125,17 +125,16 @@ func getUserFromDatabase(username, network string, db *sql.DB) (User, error) {
 				grantLines = append(grantLines, grantLine)
 			}
 			var permissions []Permission
-			if len(grantLines) == 1 {
-				var tmpPerm Permission
-				tmpPerm.parseUserFromGrantLine(grantLines[0])
-				permissions = append(permissions, tmpPerm)
-
-			} else {
-				for _, grantLine := range grantLines[1:] {
-					var tmpPerm Permission
-					tmpPerm.parseUserFromGrantLine(grantLine)
-					permissions = append(permissions, tmpPerm)
+			for _, grantLine := range grantLines {
+				// Sometimes users, apart from real grants have "USAGE" grant in the list
+				// But if you have any other grant, like select, usage is allowed
+				// We do not want to list it all the time, so we exclude it
+				if strings.Contains(grantLine, "GRANT USAGE ON") && len(grantLines) != 1  {
+					continue
 				}
+				var tmpPerm Permission
+				tmpPerm.parseUserFromGrantLine(grantLine)
+				permissions = append(permissions, tmpPerm)
 			}
 			user.Permissions = permissions
 		}
