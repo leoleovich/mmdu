@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 	"errors"
 )
@@ -34,7 +33,7 @@ func (u *User) compare(usr *User) bool {
 		for _, up := range u.Permissions {
 			var found bool
 			for _, uperm := range usr.Permissions {
-				if reflect.DeepEqual(up, uperm) {
+				if up.compare(uperm) {
 					found = true
 					break
 				}
