@@ -32,7 +32,7 @@ func main() {
 	}
 
 	defaultDatabases := []Database{Database{"information_schema"}, Database{"mysql"},
-		Database{"performance_schema"}, Database{"sys"}}
+		Database{"performance_schema"}}
 	validatedUsers, err := validateUsers(conf.User)
 	if err != nil {
 		fmt.Println("Error during validation of user list:", err.Error())
