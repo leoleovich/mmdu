@@ -31,7 +31,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultDatabases := []Database{Database{"information_schema"}, Database{"mysql"}, Database{"performance_schema"}}
+	defaultDatabases := []Database{Database{"information_schema"}, Database{"mysql"},
+		Database{"performance_schema"}, Database{"sys"}}
 	validatedUsers, err := validateUsers(conf.User)
 	if err != nil {
 		fmt.Println("Error during validation of user list:", err.Error())
@@ -43,7 +44,7 @@ func main() {
 
 	usersFromDB, err := getAllUsersFromDB(db)
 	if err != nil {
-		fmt.Println("Failed to get users from DB" , err.Error())
+		fmt.Println("Failed to get users from DB", err.Error())
 		os.Exit(2)
 	}
 
