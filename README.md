@@ -45,11 +45,14 @@ Nothing to do
 
 You need to update settings and add your own data into configuration file */etc/mmdu/mmdu.toml*:  
 
-- **[access]** - this section contains data to connect to mysql server.  
-  You can specify *username*, *password*, *initPass*, *host*, *port*. If you do not - it has default values (root without password to localhost 3306).  
+- **[access]** - this section contains data to connect to mysql server  
+  You can specify *username*, *password*, *initPass*, *host*, *port*. If you do not - it has default values (root without password to localhost 3306)  
   - username - users which has permissions to grant (WITH GRANT OPTION) privileges, drop and create databases and users  
   - password - password for this user  
-  - initPass - we need it because by default mysql does not have root password or has 1 time pass (5.7). Default is no password authentication  
+  - initPass - if your mysql was managed before by something else and has password, you can provide initial data to login and make changes. Default is no password authentication  
+  - host - host where mmdu should connect. Default is "localhost"  
+  - port - port where mmdu should connect. Default is 3306  
+  - socket - prefered. If you have this parameter set up, mmdu will try to connect via socket. This is prefered, because in 5.7 this is the only way to connect with root to freshly installed DB  
   
 - **[[database]]** - Databases which need to be in mysql.
   - name - name of database to manage
