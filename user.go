@@ -3,10 +3,10 @@ package main
 import (
 	"crypto/sha1"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
-	"errors"
 )
 
 type User struct {
@@ -79,7 +79,7 @@ func (u *User) addUser(tx *sql.Tx, execute bool) bool {
 		}
 
 		query := "GRANT " + strings.Join(privileges, ", ") + " ON " + database + "." + table + " TO '" +
-		u.Username + "'@'" + u.Network + "' IDENTIFIED BY PASSWORD '" + u.HashedPassword + "'"
+			u.Username + "'@'" + u.Network + "' IDENTIFIED BY PASSWORD '" + u.HashedPassword + "'"
 
 		if u.GrantOption {
 			query += " WITH GRANT OPTION"
@@ -102,8 +102,19 @@ func getUserFromDatabase(username, network string, db *sql.DB) (User, error) {
 
 	var grantPriv string
 	var user User
+
 	query := "SELECT User, Host, Password, Grant_priv FROM mysql.user WHERE User='" + username + "' and Host='" + network + "'"
-	err := db.QueryRow(query).Scan(&user.Username, &user.Network, &user.HashedPassword, &grantPriv)
+
+	version, err := getVersion(db)
+	if err != nil {
+		return user, err
+	} else {
+		// For now only percona 5.7 stopped using Password field. Maybe later all will switch
+		if strings.HasPrefix(version, "5.7") {
+			query = "SELECT User, Host, authentication_string, Grant_priv FROM mysql.user WHERE User='" + username + "' and Host='" + network + "'"
+		}
+	}
+	err = db.QueryRow(query).Scan(&user.Username, &user.Network, &user.HashedPassword, &grantPriv)
 	if err != nil {
 		return user, err
 	} else {
@@ -126,11 +137,11 @@ func getUserFromDatabase(username, network string, db *sql.DB) (User, error) {
 			var permissions []Permission
 			for _, grantLine := range grantLines {
 				/*
-				Sometimes users, apart from real grants have "USAGE" grant in the list
-				But if you have any other grant, like select, usage is allowed
-				We do not want to list it all the time, so we exclude it
+					Sometimes users, apart from real grants have "USAGE" grant in the list
+					But if you have any other grant, like select, usage is allowed
+					We do not want to list it all the time, so we exclude it
 				*/
-				if strings.Contains(grantLine, "GRANT USAGE ON") && len(grantLines) != 1  {
+				if strings.Contains(grantLine, "GRANT USAGE ON") && len(grantLines) != 1 {
 					continue
 				}
 				var tmpPerm Permission
@@ -225,4 +236,11 @@ func getUsersToAdd(usersFromConf, usersFromDB []User) []User {
 	}
 
 	return usersToAdd
+}
+
+func getVersion(db *sql.DB) (string, error) {
+	var version string
+	query := "SELECT @@version"
+	err := db.QueryRow(query).Scan(&version)
+	return version, err
 }
