@@ -12,6 +12,7 @@ type Access struct {
 	InitPassword string
 	Host         string
 	Port         int
+	Socket       string
 }
 
 func (a *Access) getConnectionString(initPass bool) string {
@@ -24,18 +25,22 @@ func (a *Access) getConnectionString(initPass bool) string {
 	if a.Port == 0 {
 		a.Port = 3306
 	}
+	protocol := fmt.Sprintf("tcp(%s:%d)", a.Host, a.Port)
+	if a.Socket != "" {
+		protocol = fmt.Sprintf("unix(%s)", a.Socket)
+	}
 
 	if initPass {
 		if a.InitPassword == "" {
-			return fmt.Sprintf("%s@tcp(%s:%d)/", a.Username, a.Host, a.Port)
+			return fmt.Sprintf("%s@%s/", a.Username, protocol)
 		} else {
-			return fmt.Sprintf("%s:%s@tcp(%s:%d)/", a.Username, a.InitPassword, a.Host, a.Port)
+			return fmt.Sprintf("%s:%s@%s/", a.Username, a.InitPassword, protocol)
 		}
 	} else {
 		if a.Password == "" {
-			return fmt.Sprintf("%s@tcp(%s:%d)/", a.Username, a.Host, a.Port)
+			return fmt.Sprintf("%s@%s/", a.Username, protocol)
 		} else {
-			return fmt.Sprintf("%s:%s@tcp(%s:%d)/", a.Username, a.Password, a.Host, a.Port)
+			return fmt.Sprintf("%s:%s@%s/", a.Username, a.Password, protocol)
 		}
 	}
 

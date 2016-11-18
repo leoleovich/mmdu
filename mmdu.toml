@@ -2,8 +2,9 @@
 username="root"
 password="root"
 # initPassword = "myOldPassword"
-host="localhost"
-port=3306
+# host="localhost"
+# port=3306
+socket="/var/run/mysqld/mysqld.sock"
 
 [[database]]
 name = "oleg_test"
