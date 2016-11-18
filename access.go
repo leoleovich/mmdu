@@ -33,7 +33,6 @@ func (a *Access) getConnectionString(initPass bool) string {
 		}
 	} else {
 		if a.Password == "" {
-			fmt.Println("ddd")
 			return fmt.Sprintf("%s@tcp(%s:%d)/", a.Username, a.Host, a.Port)
 		} else {
 			return fmt.Sprintf("%s:%s@tcp(%s:%d)/", a.Username, a.Password, a.Host, a.Port)
