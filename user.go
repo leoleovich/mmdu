@@ -123,6 +123,9 @@ func getUserFromDatabase(username, network string, db *sql.DB) (User, error) {
 		}
 		rows, err := db.Query("SHOW GRANTS FOR '" + username + "'@'" + network + "'")
 		if err != nil {
+			if strings.Contains(fmt.Sprintf("%v", err), "Error 1141: There is no such grant defined for user") {
+				return user, nil
+			}
 			return user, err
 		} else {
 			defer rows.Close()
