@@ -15,32 +15,26 @@ type DatabaseConfig struct {
 	Database []Database
 }
 
-func (d *Database) dropDatabase(tx *sql.Tx, execute bool) bool {
+func (d *Database) dropDatabase(tx *sql.Tx, execute bool) error {
 	query := "DROP DATABASE " + d.Name
 	if execute {
 		_, err := tx.Exec(query)
-		if err != nil {
-			return false
-		}
+		return err
 	} else {
 		fmt.Println(query)
+		return nil
 	}
-
-	return true
 }
 
-func (d *Database) addDatabase(tx *sql.Tx, execute bool) bool {
+func (d *Database) addDatabase(tx *sql.Tx, execute bool) error {
 	query := "CREATE DATABASE " + d.Name
 	if execute {
 		_, err := tx.Exec(query)
-		if err != nil {
-			return false
-		}
+		return err
 	} else {
 		fmt.Println(query)
+		return nil
 	}
-
-	return true
 }
 
 func getDatabasesFromUsers(users []User) []Database {

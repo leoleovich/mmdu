@@ -49,21 +49,18 @@ func (u *User) compare(usr *User) bool {
 
 }
 
-func (u *User) dropUser(tx *sql.Tx, execute bool) bool {
+func (u *User) dropUser(tx *sql.Tx, execute bool) error {
 	query := "DROP USER '" + u.Username + "'@'" + u.Network + "'"
 	if execute {
 		_, err := tx.Exec(query)
-		if err != nil {
-			return false
-		}
+		return err
 	} else {
 		fmt.Println(query)
+		return nil
 	}
-
-	return true
 }
 
-func (u *User) addUser(tx *sql.Tx, execute bool) bool {
+func (u *User) addUser(tx *sql.Tx, execute bool) error {
 
 	for _, permission := range u.Permissions {
 		database := permission.Database
@@ -87,15 +84,13 @@ func (u *User) addUser(tx *sql.Tx, execute bool) bool {
 
 		if execute {
 			_, err := tx.Exec(query)
-			if err != nil {
-				return false
-			}
+			return err
 		} else {
 			fmt.Println(query)
 		}
 	}
 
-	return true
+	return nil
 }
 
 func getUserFromDatabase(username, network string, db *sql.DB) (User, error) {

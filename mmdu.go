@@ -31,8 +31,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultDatabases := []Database{Database{"information_schema"}, Database{"mysql"},
-		Database{"performance_schema"}}
+	defaultDatabases := []Database{{"information_schema"}, {"mysql"},
+		{"performance_schema"}}
 	validatedUsers, err := validateUsers(conf.User)
 	if err != nil {
 		fmt.Println("Error during validation of user list:", err.Error())
@@ -74,29 +74,40 @@ func main() {
 		}
 
 		for _, database := range databasesToRemove {
-			if !database.dropDatabase(tx, execute) {
+			err := database.dropDatabase(tx, execute)
+			if err != nil {
+				fmt.Println(database.Name, ":", err)
 				tx.Rollback()
+				return
 			}
 		}
 
 		for _, database := range databasesToAdd {
-			if !database.addDatabase(tx, execute) {
+			err := database.addDatabase(tx, execute)
+			if err != nil {
+				fmt.Println(database.Name, ":", err)
 				tx.Rollback()
+				return
 			}
 		}
 
 		for _, user := range usersToRemove {
-			if !user.dropUser(tx, execute) {
+			err := user.dropUser(tx, execute)
+			if err != nil {
+				fmt.Println(user.Username, ":", err)
 				tx.Rollback()
+				return
 			}
 		}
 
 		for _, user := range usersToAdd {
-			if !user.addUser(tx, execute) {
+			err := user.addUser(tx, execute)
+			if err != nil {
+				fmt.Println(user.Username, ":", err)
 				tx.Rollback()
+				return
 			}
 		}
-		_, err = tx.Exec("select * from mysql.user ; select * from mysql.user;")
 		tx.Commit()
 	}
 }
