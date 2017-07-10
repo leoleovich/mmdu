@@ -55,7 +55,7 @@ You need to update settings and add your own data into configuration file */etc/
   - initPass - if your mysql was managed before by something else and has password, you can provide initial data to login and make changes. Default is no password authentication  
   - host - host where mmdu should connect. Default is "localhost"  
   - port - port where mmdu should connect. Default is 3306  
-  - socket - prefered. If you have this parameter set up, mmdu will try to connect via socket. This is prefered, because in 5.7 this is the only way to connect with root to freshly installed DB  
+  - socket - preferred. If you have this parameter set up, mmdu will try to connect via socket. This is prefered, because in 5.7 this is the only way to connect with root to freshly installed DB  
   
 - **[[database]]** - Databases which need to be in mysql.
   - name - name of database to manage
