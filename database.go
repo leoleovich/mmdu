@@ -21,7 +21,7 @@ func (d *Database) dropDatabase(tx *sql.Tx, execute bool) error {
 		_, err := tx.Exec(query)
 		return err
 	} else {
-		fmt.Println(query, ";")
+		fmt.Println(query + ";")
 		return nil
 	}
 }
@@ -32,7 +32,7 @@ func (d *Database) addDatabase(tx *sql.Tx, execute bool) error {
 		_, err := tx.Exec(query)
 		return err
 	} else {
-		fmt.Println(query, ";")
+		fmt.Println(query + ";")
 		return nil
 	}
 }
