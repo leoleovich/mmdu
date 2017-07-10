@@ -55,7 +55,7 @@ func (u *User) dropUser(tx *sql.Tx, execute bool) error {
 		_, err := tx.Exec(query)
 		return err
 	} else {
-		fmt.Println(query)
+		fmt.Println(query, ";")
 		return nil
 	}
 }
@@ -86,7 +86,7 @@ func (u *User) addUser(tx *sql.Tx, execute bool) error {
 			_, err := tx.Exec(query)
 			return err
 		} else {
-			fmt.Println(query)
+			fmt.Println(query, ";")
 		}
 	}
 
