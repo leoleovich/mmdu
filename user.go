@@ -184,7 +184,7 @@ func validateUsers(users []User) ([]User, error) {
 	for _, u := range users {
 		if u.Username != "" && u.Network != "" && len(u.Permissions) > 0 && (u.Password != "" || u.HashedPassword != "") {
 			for _, permission := range u.Permissions {
-				if permission.Database == "" || permission.Database == "" || len(permission.Privileges) == 0 {
+				if permission.Database == "" || len(permission.Privileges) == 0 {
 					return resultUsers, errors.New("Permissions for user set incorrectly")
 				}
 			}
