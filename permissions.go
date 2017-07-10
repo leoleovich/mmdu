@@ -2,8 +2,8 @@ package main
 
 import (
 	"regexp"
-	"strings"
 	"sort"
+	"strings"
 )
 
 type Permission struct {
@@ -21,7 +21,7 @@ func (p *Permission) parseUserFromGrantLine(grantLine string) {
 }
 
 func (p *Permission) compare(pr Permission) bool {
-	if p.Database == pr.Database && p.Table == pr.Table && len(p.Privileges) == len(pr.Privileges){
+	if p.Database == pr.Database && p.Table == pr.Table && len(p.Privileges) == len(pr.Privileges) {
 		for _, priv1 := range p.Privileges {
 			var found bool
 			for _, priv2 := range pr.Privileges {

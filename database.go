@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
 	"log"
 	"strings"
 )
@@ -53,7 +53,7 @@ func getDatabasesFromUsers(users []User) []Database {
 	return databases
 }
 
-func getDatabasesFromDB(db *sql.DB) ([]Database, error)  {
+func getDatabasesFromDB(db *sql.DB) ([]Database, error) {
 	var databases []Database
 	rows, err := db.Query(showAllDatabases)
 	if err != nil {
