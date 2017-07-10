@@ -45,6 +45,9 @@ Nothing to do
 
 You need to update settings and add your own data into configuration file */etc/mmdu/mmdu.toml*:  
 
+- **[general]** -general configuration section
+  - autoExecute - behaves like `-e` parameter. If true - executes statements. Good for staging servers to automatically execute things. Default `false`
+  
 - **[access]** - this section contains data to connect to mysql server  
   You can specify *username*, *password*, *initPass*, *host*, *port*. If you do not - it has default values (root without password to localhost 3306)  
   - username - users which has permissions to grant (WITH GRANT OPTION) privileges, drop and create databases and users  

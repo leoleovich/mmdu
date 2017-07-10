@@ -1,3 +1,6 @@
+[general]
+autoExecute = false
+
 [access]
 username="root"
 password="root"

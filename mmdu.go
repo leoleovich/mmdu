@@ -8,7 +8,12 @@ import (
 	"os"
 )
 
+type General struct {
+	AutoExecute bool
+}
+
 type Config struct {
+	General  General
 	Access   Access
 	Database []Database
 	User     []User
@@ -29,6 +34,11 @@ func main() {
 	if _, err := toml.DecodeFile(configFile, &conf); err != nil {
 		fmt.Println("Failed to parse config file", err.Error())
 		os.Exit(1)
+	}
+
+	// Execute statements ether on -e argument or autoExecute from config file
+	if conf.General.AutoExecute == true {
+		execute = true
 	}
 
 	defaultDatabases := []Database{{"information_schema"}, {"mysql"},
